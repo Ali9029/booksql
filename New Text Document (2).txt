@@ -1,0 +1,90 @@
+var express = require('express');
+const { Op } = require("sequelize");
+var router = express.Router();
+const body_parser = require('body-parser');
+router.use(body_parser.json());
+const jwt = require('jsonwebtoken');
+const User = require('../models').User;
+
+
+router.post('/',(req,res,next)=>{
+ User.findOne({  where: {
+    [Op.and] : [
+      {
+          Name: { [Op.like]: req.body.Name }
+      },
+      {
+          password: {[Op.like]: req.body.password}
+      }
+  ]        
+}}).then((user)=>{
+      if(user==null)
+      {
+        res.statusCode =403;
+        res.send({message:"invalid name or password"});
+      }
+      else{
+        res.statusCode =200;
+        const token = jwt.sign({id:User.id},"123456789");
+        res.setHeader("auth-token",token).send({data:token,message:"Logged in"});
+}},(err)=>next(err))     
+      .catch((err)=>next(err));  
+});
+module.exports =  router;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const jwt = require('jsonwebtoken');
+
+module.exports = function(req,res,next){
+
+    const token= req.header('auth-token');
+
+   
+    if(!token) return res.status(401).send("Access Denied")
+  
+    try{
+
+        const verified = jwt.verify(token,"123456789");
+        req.user = verified;
+        next();
+    
+    } catch(err){
+        res.send(400).send("Invalid Token");
+    }
+
+}
+
+
+
+
+
+
+
+
+
+
+
